@@ -31,9 +31,9 @@ const SECRET = "mysecretkey";
 
 
 // ================= DATABASE =================
-mongoose.connect("mongodb://127.0.0.1:27017/mobile-shop")
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
+// mongoose.connect("mongodb://127.0.0.1:27017/mobile-shop")
+//   .then(() => console.log("MongoDB Connected"))
+//   .catch((err) => console.log(err));
 
 // ================= FILE UPLOAD (ONLY ONCE) =================
 const storage = multer.diskStorage({
@@ -222,6 +222,8 @@ app.delete("/slider/:id", async (req, res) => {
 });
 
 // ================= SERVER =================
-app.listen(5000, "0.0.0.0", () => {
-  console.log("Server running on http://localhost:5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });
