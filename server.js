@@ -12,9 +12,7 @@ const contactRoutes = require("./routes/contact");
 require("dotenv").config();
 const app = express();
 app.use(express.json({ limit: "10mb" }));
-app.use(cors({
-  origin: "*"
-}));
+app.use(cors({ origin: "*" }));
 app.use("/contact", contactRoutes);
 
 
@@ -153,8 +151,17 @@ app.post("/products", authMiddleware, async (req, res) => {
 
 // UPDATE
 app.put("/products/:id", authMiddleware, async (req, res) => {
-  await Product.findByIdAndUpdate(req.params.id, req.body);
-  res.json({ message: "Updated" });
+  try {
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updated || { message: "No product found" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // DELETE
@@ -170,14 +177,25 @@ app.get("/team", async (req, res) => {
 });
 
 app.post("/team", authMiddleware, upload.single("image"), async (req, res) => {
-  const newMember = new Team({
-    name: req.body.name,
-    role: req.body.role,
-    image: req.file.filename,
-  });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-  await newMember.save();
-  res.json(newMember);
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
+    const newMember = new Team({
+      name: req.body.name,
+      role: req.body.role,
+      image: imageUrl,
+    });
+
+    await newMember.save();
+
+    res.json(newMember);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete("/team/:id", authMiddleware, async (req, res) => {
@@ -209,13 +227,26 @@ app.get("/slider", async (req, res) => {
 });
 
 app.post("/slider", upload.single("image"), async (req, res) => {
-  const newSlider = new Slider({
-    image: req.file.filename, // ✅ store filename only
-  });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-  await newSlider.save();
-  res.json({ message: "Slider image added" });
+    const imageUrl = `${req.protocol}//${req.get("host")}/uploads/${req.file.filename}`;
+
+    const newSlider = new Slider({
+      image: imageUrl,
+    });
+
+    await newSlider.save();
+
+    res.json(newSlider);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
+
 
 app.delete("/slider/:id", async (req, res) => {
   await Slider.findByIdAndDelete(req.params.id);
