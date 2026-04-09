@@ -10,6 +10,8 @@ const User = require("./models/user");
 const Category = require("./models/Category");
 const Slider = require("./models/Slider");
 const contactRoutes = require("./routes/contact");
+const PORT = process.env.PORT || 1000;
+const MONGO_URI = process.env.MONGO_URI;
 
 require("dotenv").config();
 
@@ -25,15 +27,15 @@ app.use("/contact", contactRoutes);
 
 
 // ================= CONFIG =================
-const SECRET = "mysecretkey";
+const SECRET = process.env.JWT_SECRET || "Diepak@1212##";
 
 
 
 
 //================= DATABASE =================
-// mongoose.connect("mongodb://127.0.0.1:27017/mobile-shop")
-//   .then(() => console.log("MongoDB Connected"))
-//   .catch((err) => console.log(err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
 
 // ================= FILE UPLOAD (ONLY ONCE) =================
 const storage = multer.diskStorage({
