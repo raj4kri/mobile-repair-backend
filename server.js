@@ -17,11 +17,9 @@ app.use("/contact", contactRoutes);
 
 
 
-// const mongoose = require("mongoose");
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch((err) => console.log("Error ❌", err));
+
+
 
 // ================= CONFIG =================
 const SECRET = "mysecretkey";
@@ -29,10 +27,10 @@ const SECRET = "mysecretkey";
 
 
 
-// ================= DATABASE =================
-// mongoose.connect("mongodb://127.0.0.1:27017/mobile-shop")
-//   .then(() => console.log("MongoDB Connected"))
-//   .catch((err) => console.log(err));
+//================= DATABASE =================
+mongoose.connect("mongodb://127.0.0.1:27017/mobile-shop")
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
 
 // ================= FILE UPLOAD (ONLY ONCE) =================
 const storage = multer.diskStorage({
