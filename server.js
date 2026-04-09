@@ -1,17 +1,16 @@
-
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const User = require("./models/user");
 const Category = require("./models/Category");
 const Slider = require("./models/Slider");
 const contactRoutes = require("./routes/contact");
-const PORT = process.env.PORT || 1000;
-const MONGO_URI = process.env.MONGO_URI;
 
 require("dotenv").config();
 
@@ -20,31 +19,27 @@ app.use(express.json({ limit: "10mb" }));
 app.use(cors({ origin: "*" }));
 app.use("/contact", contactRoutes);
 
-
-
-
-
-
-
 // ================= CONFIG =================
-const SECRET = process.env.JWT_SECRET || "Diepak@1212##";
+const PORT = process.env.PORT || 1000;
+const MONGO_URI = process.env.MONGO_URI;
+const SECRET = process.env.SECRET || "mysecretkey";
 
-
-
-
-//================= DATABASE =================
-mongoose.connect(process.env.MONGO_URI)
+// ================= DATABASE =================
+mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
-// ================= FILE UPLOAD (ONLY ONCE) =================
+// ================= UPLOADS FOLDER =================
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+// ================= FILE UPLOAD =================
 const storage = multer.diskStorage({
   destination: "./uploads",
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
-
 const upload = multer({ storage });
 
 // serve images
@@ -53,11 +48,8 @@ app.use("/uploads", express.static("uploads"));
 // ================= AUTH MIDDLEWARE =================
 const authMiddleware = (req, res, next) => {
   const header = req.headers.authorization;
-
   if (!header) return res.status(401).json({ message: "No token" });
-
   const token = header.split(" ")[1];
-
   try {
     const decoded = jwt.verify(token, SECRET);
     req.user = decoded;
@@ -74,46 +66,30 @@ const Product = mongoose.model("Product", {
   image: String,
   category: String,
 });
-
 const Team = mongoose.model("Team", {
   name: String,
   role: String,
   image: String,
 });
 
-// ================= AUTH =================
-
-// REGISTER
+// ================= AUTH ROUTES =================
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
-
   const hashedPassword = await bcrypt.hash(password, 10);
-
   const user = new User({ username, password: hashedPassword });
   await user.save();
-
   res.json({ message: "User registered" });
 });
 
-// LOGIN
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-
     const user = await User.findOne({ username });
-
     if (!user) return res.status(400).json({ message: "User not found" });
-
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
-
-    const token = jwt.sign({ id: user._id }, SECRET, {
-      expiresIn: "7d",
-    });
-
+    const token = jwt.sign({ id: user._id }, SECRET, { expiresIn: "7d" });
     res.json({ token });
-
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -124,56 +100,37 @@ app.post("/login", async (req, res) => {
 app.get("/products", async (req, res) => {
   try {
     const { search = "", category = "", page = 1, limit = 6 } = req.query;
-
-    let query = {
-      name: { $regex: search, $options: "i" },
-    };
-
+    let query = { name: { $regex: search, $options: "i" } };
     if (category) query.category = category;
-
     const skip = (page - 1) * limit;
-
-    const products = await Product.find(query)
-      .skip(skip)
-      .limit(parseInt(limit));
-
+    const products = await Product.find(query).skip(skip).limit(parseInt(limit));
     const total = await Product.countDocuments(query);
-
     res.json({
       products,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ADD PRODUCT
 app.post("/products", authMiddleware, async (req, res) => {
   const newProduct = new Product(req.body);
   await newProduct.save();
   res.json(newProduct);
 });
 
-// UPDATE
 app.put("/products/:id", authMiddleware, async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
+    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated || { message: "No product found" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE
 app.delete("/products/:id", authMiddleware, async (req, res) => {
   await Product.findByIdAndDelete(req.params.id);
   res.json({ message: "Deleted" });
@@ -187,20 +144,11 @@ app.get("/team", async (req, res) => {
 
 app.post("/team", authMiddleware, upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-
-    const newMember = new Team({
-      name: req.body.name,
-      role: req.body.role,
-      image: imageUrl,
-    });
-
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const newMember = new Team({ name: req.body.name, role: req.body.role, image: imageUrl });
     await newMember.save();
-
     res.json(newMember);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -237,36 +185,23 @@ app.get("/slider", async (req, res) => {
 
 app.post("/slider", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-
-    const newSlider = new Slider({
-      image: imageUrl,
-    });
-
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const newSlider = new Slider({ image: imageUrl });
     await newSlider.save();
-
     res.json(newSlider);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
-
 app.delete("/slider/:id", async (req, res) => {
   await Slider.findByIdAndDelete(req.params.id);
   res.json({ message: "Deleted" });
 });
 
-
-
-
 // ================= SERVER =================
-
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
