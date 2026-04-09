@@ -94,21 +94,27 @@ app.post("/register", async (req, res) => {
 
 // LOGIN
 app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-  const user = await User.findOne({ username });
+    const user = await User.findOne({ username });
 
-  if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-  const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
 
-  if (!isMatch) return res.status(400).json({ message: "Invalid password" });
+    if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
-  const token = jwt.sign({ id: user._id }, SECRET, {
-    expiresIn: "7d",
-  });
+    const token = jwt.sign({ id: user._id }, SECRET, {
+      expiresIn: "7d",
+    });
 
-  res.json({ token });
+    res.json({ token });
+
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // ================= PRODUCTS =================
@@ -232,7 +238,7 @@ app.post("/slider", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const imageUrl = `${req.protocol}//${req.get("host")}/uploads/${req.file.filename}`;
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
     const newSlider = new Slider({
       image: imageUrl,
