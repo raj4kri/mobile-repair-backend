@@ -185,8 +185,13 @@ app.delete("/categories/:id", authMiddleware, async (req, res) => {
 
 // ================= SLIDER =================
 app.get("/slider", async (req, res) => {
-  const data = await Slider.find();
-  res.json(data);
+  try {
+    const data = await Slider.find();
+    res.json(data);
+  } catch (err) {
+    console.error("SLIDER FETCH ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/slider", upload.single("image"), async (req, res) => {
