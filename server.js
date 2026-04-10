@@ -145,9 +145,15 @@ app.get("/team", async (req, res) => {
 app.post("/team", authMiddleware, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    const newMember = new Team({ name: req.body.name, role: req.body.role, image: imageUrl });
+
+    const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
+
+    const newMember = new Team({
+      name: req.body.name,
+      role: req.body.role,
+      image: imageUrl,
+    });
+
     await newMember.save();
     res.json(newMember);
   } catch (err) {
@@ -186,9 +192,11 @@ app.get("/slider", async (req, res) => {
 app.post("/slider", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
+    const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
+
     const newSlider = new Slider({ image: imageUrl });
+
     await newSlider.save();
     res.json(newSlider);
   } catch (err) {
