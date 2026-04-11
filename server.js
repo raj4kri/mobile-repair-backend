@@ -145,7 +145,7 @@ app.get("/team", async (req, res) => {
 app.post("/team", authMiddleware, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const protocol = "https";
     const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
     const newMember = new Team({ name: req.body.name, role: req.body.role, image: imageUrl });
     await newMember.save();
@@ -183,15 +183,32 @@ app.get("/slider", async (req, res) => {
   res.json(data);
 });
 
+a// FIXED SLIDER ROUTE
 app.post("/slider", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    console.log("FILE:", req.file);
+    console.log("BODY:", req.body);
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
     const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+
     const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    const newSlider = new Slider({ image: imageUrl });
-    await newSlider.save();
-    res.json(newSlider);
+
+    const newSlider = new Slider({
+      image: imageUrl,
+    });
+
+    const saved = await newSlider.save();
+
+    console.log("SAVED:", saved);
+
+    res.json(saved);
+
   } catch (err) {
+    console.error("SLIDER ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
