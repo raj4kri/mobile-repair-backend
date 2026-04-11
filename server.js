@@ -19,6 +19,33 @@ app.use(express.json({ limit: "10mb" }));
 app.use(cors({ origin: "*" }));
 app.use("/contact", contactRoutes);
 
+
+
+
+// server.js (UPLOAD FIXED WITH CLOUDINARY)
+
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+// ================= CLOUDINARY CONFIG =================
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
+
+
+// ================= MULTER CLOUD STORAGE =================
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "mobile-repair",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+  },
+});
+
+const upload = multer({ storage });
+
 // ================= CONFIG =================
 const PORT = process.env.PORT || 1000;
 const MONGO_URI = process.env.MONGO_URI;
@@ -33,17 +60,17 @@ mongoose.connect(MONGO_URI)
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// ================= FILE UPLOAD =================
-const storage = multer.diskStorage({
-  destination: "./uploads",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
+// // ================= FILE UPLOAD =================
+// const storage = multer.diskStorage({
+//   destination: "./uploads",
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + path.extname(file.originalname));
+//   },
+// });
+// const upload = multer({ storage });
 
 // serve images
-app.use("/uploads", express.static("uploads"));
+// app.use("/uploads", express.static("uploads"));
 
 // ================= AUTH MIDDLEWARE =================
 const authMiddleware = (req, res, next) => {
@@ -146,12 +173,12 @@ app.post("/team", authMiddleware, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
+    // const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
 
     const newMember = new Team({
       name: req.body.name,
       role: req.body.role,
-      image: imageUrl,
+     image: req.file.path, // ✅ cloud URL
     });
 
     await newMember.save();
@@ -198,9 +225,11 @@ app.post("/slider", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
+    // const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
 
-    const newSlider = new Slider({ image: imageUrl });
+   const newSlider = new Slider({
+      image: req.file.path, // ✅ cloud URL
+    });
 
     await newSlider.save();
     res.json(newSlider);
