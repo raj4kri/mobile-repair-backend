@@ -225,24 +225,26 @@ app.post("/slider", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    // const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
-
-   const newSlider = new Slider({
-      image: req.file.path, // ✅ cloud URL
+    const newSlider = new Slider({
+      image: req.file.path, // cloud url
     });
 
     await newSlider.save();
     res.json(newSlider);
   } catch (err) {
+    console.error("SLIDER ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 app.delete("/slider/:id", async (req, res) => {
-  await Slider.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+  try {
+    await Slider.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
-
 // ================= SERVER =================
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
