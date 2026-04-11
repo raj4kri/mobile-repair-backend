@@ -49,6 +49,7 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 // ================= FILE UPLOAD =================
+<<<<<<< HEAD
 // const storage = multer.diskStorage({
 //   destination: "./uploads",
 //   filename: (req, file, cb) => {
@@ -56,6 +57,15 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 //   },
 // });
 // const upload = multer({ storage });
+=======
+const storage = multer.diskStorage({
+  destination: "./uploads",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
+>>>>>>> 5affc2a18e54ed21804bd35fcb227f38253d27d4
 
 // serve images
 app.use("/uploads", express.static("uploads"));
@@ -199,6 +209,7 @@ app.get("/slider", async (req, res) => {
 });
 
 a// FIXED SLIDER ROUTE
+<<<<<<< HEAD
 // ================= SLIDER ROUTE =================
 app.post("/slider", upload.single("image"), async (req, res) => {
   try {
@@ -223,6 +234,29 @@ app.post("/slider", upload.single("image"), async (req, res) => {
 
     const saved = await newSlider.save();
 
+=======
+app.post("/slider", upload.single("image"), async (req, res) => {
+  try {
+    console.log("FILE:", req.file);
+    console.log("BODY:", req.body);
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+
+    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
+    const newSlider = new Slider({
+      image: imageUrl,
+    });
+
+    const saved = await newSlider.save();
+
+    console.log("SAVED:", saved);
+
+>>>>>>> 5affc2a18e54ed21804bd35fcb227f38253d27d4
     res.json(saved);
 
   } catch (err) {
