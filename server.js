@@ -18,10 +18,15 @@ require("dotenv").config();
 // ================= CLOUDINARY =================
 const cloudinary = require("cloudinary").v2;
 
+
+
+
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
+
+
 });
 
 // ================= MULTER MEMORY =================
@@ -49,7 +54,7 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 // ================= FILE UPLOAD =================
-<<<<<<< HEAD
+
 // const storage = multer.diskStorage({
 //   destination: "./uploads",
 //   filename: (req, file, cb) => {
@@ -57,15 +62,8 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 //   },
 // });
 // const upload = multer({ storage });
-=======
-const storage = multer.diskStorage({
-  destination: "./uploads",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
->>>>>>> 5affc2a18e54ed21804bd35fcb227f38253d27d4
+
+
 
 // serve images
 app.use("/uploads", express.static("uploads"));
@@ -208,33 +206,9 @@ app.get("/slider", async (req, res) => {
   res.json(data);
 });
 
-a// FIXED SLIDER ROUTE
-<<<<<<< HEAD
+// FIXED SLIDER ROUTE
+
 // ================= SLIDER ROUTE =================
-app.post("/slider", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    // upload buffer to cloudinary
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: "slider" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(req.file.buffer);
-    });
-
-    const newSlider = new Slider({
-      image: result.secure_url, // HTTPS URL
-    });
-
-    const saved = await newSlider.save();
-
-=======
 app.post("/slider", upload.single("image"), async (req, res) => {
   try {
     console.log("FILE:", req.file);
@@ -256,7 +230,7 @@ app.post("/slider", upload.single("image"), async (req, res) => {
 
     console.log("SAVED:", saved);
 
->>>>>>> 5affc2a18e54ed21804bd35fcb227f38253d27d4
+
     res.json(saved);
 
   } catch (err) {
