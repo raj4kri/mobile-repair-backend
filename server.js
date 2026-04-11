@@ -14,37 +14,25 @@ const contactRoutes = require("./routes/contact");
 
 require("dotenv").config();
 
+
+// ================= CLOUDINARY =================
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
+
+// ================= MULTER MEMORY =================
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+
 const app = express();
 app.use(express.json({ limit: "10mb" }));
 app.use(cors({ origin: "*" }));
 app.use("/contact", contactRoutes);
-
-
-
-
-// server.js (UPLOAD FIXED WITH CLOUDINARY)
-
-const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
-// ================= CLOUDINARY CONFIG =================
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
-});
-
-
-// ================= MULTER CLOUD STORAGE =================
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "mobile-repair",
-    allowed_formats: ["jpg", "png", "jpeg", "webp"],
-  },
-});
-
-const upload = multer({ storage });
 
 // ================= CONFIG =================
 const PORT = process.env.PORT || 1000;
@@ -60,7 +48,7 @@ mongoose.connect(MONGO_URI)
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// // ================= FILE UPLOAD =================
+// ================= FILE UPLOAD =================
 // const storage = multer.diskStorage({
 //   destination: "./uploads",
 //   filename: (req, file, cb) => {
@@ -70,7 +58,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 // const upload = multer({ storage });
 
 // serve images
-// app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
 
 // ================= AUTH MIDDLEWARE =================
 const authMiddleware = (req, res, next) => {
@@ -172,15 +160,9 @@ app.get("/team", async (req, res) => {
 app.post("/team", authMiddleware, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    // const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
-
-    const newMember = new Team({
-      name: req.body.name,
-      role: req.body.role,
-     image: req.file.path, // ✅ cloud URL
-    });
-
+    const protocol = "https";
+    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const newMember = new Team({ name: req.body.name, role: req.body.role, image: imageUrl });
     await newMember.save();
     res.json(newMember);
   } catch (err) {
@@ -212,25 +194,37 @@ app.delete("/categories/:id", authMiddleware, async (req, res) => {
 
 // ================= SLIDER =================
 app.get("/slider", async (req, res) => {
-  try {
-    const data = await Slider.find();
-    res.json(data);
-  } catch (err) {
-    console.error("SLIDER FETCH ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
+  const data = await Slider.find();
+  res.json(data);
 });
 
+a// FIXED SLIDER ROUTE
+// ================= SLIDER ROUTE =================
 app.post("/slider", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-    const newSlider = new Slider({
-      image: req.file.path, // cloud url
+    // upload buffer to cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: "slider" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file.buffer);
     });
 
-    await newSlider.save();
-    res.json(newSlider);
+    const newSlider = new Slider({
+      image: result.secure_url, // HTTPS URL
+    });
+
+    const saved = await newSlider.save();
+
+    res.json(saved);
+
   } catch (err) {
     console.error("SLIDER ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -238,13 +232,10 @@ app.post("/slider", upload.single("image"), async (req, res) => {
 });
 
 app.delete("/slider/:id", async (req, res) => {
-  try {
-    await Slider.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  await Slider.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
+
 // ================= SERVER =================
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
