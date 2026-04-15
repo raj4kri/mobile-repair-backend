@@ -2,45 +2,45 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
-const multer = require("multer");
+// const multer = require("multer");
 const jwt = require("jsonwebtoken");
-// const path = require("path");
-// const fs = require("fs");
+
 const bcrypt = require("bcryptjs");
-const User = require("./models/user");
-const Category = require("./models/Category");
-const Slider = require("./models/Slider");
+const User = require("./models/User");
+// const Category = require("./models/Category");
+// const Slider = require("./models/Slider");
 const contactRoutes = require("./routes/contact");
-const Team = require("./models/Team");
+// const Team = require("./models/Team");
+// const Product = require("./models/Product");
 require("dotenv").config();
 
 
-// ================= CLOUDINARY =================
-const cloudinary = require("cloudinary").v2;
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_KEY,
-  api_secret: process.env.CLOUD_SECRET,
-});
-console.log(process.env.CLOUD_NAME);
-const uploadToCloudinary = (buffer, folder) => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
 
-    stream.end(buffer);
-  });
-};
+// ================= CLOUDINARY =================
+// const cloudinary = require("cloudinary").v2;
+// cloudinary.config({
+//   cloud_name: process.env.CLOUD_NAME,
+//   api_key: process.env.CLOUD_KEY,
+//   api_secret: process.env.CLOUD_SECRET,
+// });
+// console.log(process.env.CLOUD_NAME);
+// const uploadToCloudinary = (buffer, folder) => {
+//   return new Promise((resolve, reject) => {
+//     const stream = cloudinary.uploader.upload_stream(
+//       { folder },
+//       (error, result) => {
+//         if (error) reject(error);
+//         else resolve(result);
+//       }
+//     );
+
+//     stream.end(buffer);
+//   });
+// };
 
 // ================= MULTER MEMORY =================
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage });
 
 
 const app = express();
@@ -71,52 +71,20 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
-// ================= UPLOADS FOLDER =================
-// const uploadDir = path.join(__dirname, "uploads");
-// if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-// ================= FILE UPLOAD =================
-
-// const storage = multer.diskStorage({
-//   destination: "./uploads",
-//   filename: (req, file, cb) => {
-//     cb(null, Date.now() + path.extname(file.originalname));
-//   },
-// });
-// const upload = multer({ storage });
-
-
-
-// serve images
-// app.use("/uploads", express.static("uploads"));
-
 // ================= AUTH MIDDLEWARE =================
-const authMiddleware = (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ message: "No token" });
-  const token = header.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-};
+// const authMiddleware = (req, res, next) => {
+//   const header = req.headers.authorization;
+//   if (!header) return res.status(401).json({ message: "No token" });
+//   const token = header.split(" ")[1];
+//   try {
+//     const decoded = jwt.verify(token, SECRET);
+//     req.user = decoded;
+//     next();
+//   } catch (err) {
+//     return res.status(401).json({ message: "Invalid token" });
+//   }
+// };
 
-// ================= MODELS =================
-const Product = mongoose.model("Product", {
-  name: String,
-  price: String,
-  image: String,
-  category: String,
-});
-// const Team = mongoose.model("Team", {
-//   image: String,
-//   name: String,
-//   role: String,
-  
-// });
 
 // ================= AUTH ROUTES =================
 app.post("/register", async (req, res) => {
@@ -143,191 +111,154 @@ app.post("/login", async (req, res) => {
 });
 
 // ================= PRODUCTS =================
-app.get("/products", async (req, res) => {
-  try {
-    const { search = "", category = "", page = 1, limit = 6 } = req.query;
-    let query = { name: { $regex: search, $options: "i" } };
-    if (category) query.category = category;
-    const skip = (page - 1) * limit;
-    const products = await Product.find(query).skip(skip).limit(parseInt(limit));
-    const total = await Product.countDocuments(query);
-    res.json({
-      products,
-      total,
-      page: parseInt(page),
-      pages: Math.ceil(total / limit),
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+app.use("/products", require("./routes/product"));
+// app.get("/products", async (req, res) => {
+//   try {
+//     const { search = "", category = "", page = 1, limit = 6 } = req.query;
+//     let query = { name: { $regex: search, $options: "i" } };
+//     if (category) query.category = category;
+//     const skip = (page - 1) * limit;
+//     const products = await Product.find(query).skip(skip).limit(parseInt(limit));
+//     const total = await Product.countDocuments(query);
+//     res.json({
+//       products,
+//       total,
+//       page: parseInt(page),
+//       pages: Math.ceil(total / limit),
+//     });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
-app.post("/products", authMiddleware, upload.single("image"), async (req, res) => {
-  try {
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
+// app.post("/products", authMiddleware, upload.single("image"), async (req, res) => {
+//   try {
+//     console.log("BODY:", req.body);
+//     console.log("FILE:", req.file);
 
-    if (!req.file) return res.status(400).json({ error: "Image required" });
+//     if (!req.file) return res.status(400).json({ error: "Image required" });
 
-    const result = await uploadToCloudinary(req.file.buffer, "products");
+//     const result = await uploadToCloudinary(req.file.buffer, "products");
 
-    const newProduct = new Product({
-      name: req.body.name || "no-name",
-      price: req.body.price || "0",
-      category: req.body.category || "uncategorized",
-      image: result.secure_url,
-    });
+//     const newProduct = new Product({
+//       name: req.body.name || "no-name",
+//       price: req.body.price || "0",
+//       category: req.body.category || "uncategorized",
+//       image: result.secure_url,
+//     });
 
-    const saved = await newProduct.save();
+//     const saved = await newProduct.save();
 
-    console.log("SAVED:", saved);
+//     console.log("SAVED:", saved);
 
-    res.json(saved);
+//     res.json(saved);
 
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
-  }
-});
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
-app.put("/products/:id", authMiddleware, upload.single("image"), async (req, res) => {
-  try {
-    const { name, price, category } = req.body;
+// app.put("/products/:id", authMiddleware, upload.single("image"), async (req, res) => {
+//   try {
+//     const { name, price, category } = req.body;
 
-    let imageUrl;
+//     let imageUrl;
 
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, "products");
-      imageUrl = result.secure_url;
-    }
+//     if (req.file) {
+//       const result = await uploadToCloudinary(req.file.buffer, "products");
+//       imageUrl = result.secure_url;
+//     }
 
-    const updatedData = {
-      name,
-      price,
-      category,
-    };
+//     const updatedData = {
+//       name,
+//       price,
+//       category,
+//     };
 
-    // only update image if new uploaded
-    if (imageUrl) {
-      updatedData.image = imageUrl;
-    }
+//     // only update image if new uploaded
+//     if (imageUrl) {
+//       updatedData.image = imageUrl;
+//     }
 
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
-      updatedData,
-      { new: true }
-    );
+//     const updated = await Product.findByIdAndUpdate(
+//       req.params.id,
+//       updatedData,
+//       { new: true }
+//     );
 
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+//     res.json(updated);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
-app.delete("/products/:id", authMiddleware, async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
+// app.delete("/products/:id", authMiddleware, async (req, res) => {
+//   await Product.findByIdAndDelete(req.params.id);
+//   res.json({ message: "Deleted" });
+// });
 
 // ================= TEAM =================
-app.get("/team", async (req, res) => {
-  const data = await Team.find();
-  res.json(data);
-});
+app.use
+// app.get("/team", async (req, res) => {
+//   const data = await Team.find();
+//   res.json(data);
+// });
 
-app.post("/team",authMiddleware,upload.single("image"), async (req, res) => {
-  try {
-    console.log("FILE:", req.file); // 🔥 debug
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+// app.post("/team",authMiddleware,upload.single("image"), async (req, res) => {
+//   try {
+//     console.log("FILE:", req.file); // 🔥 debug
+//     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-  const result = await uploadToCloudinary(req.file.buffer, "team");
+//   const result = await uploadToCloudinary(req.file.buffer, "team");
 
-    const newTeam = new Team({
-       image: result.secure_url,
-      name: req.body.name,
-      role: req.body.role,
+//     const newTeam = new Team({
+//        image: result.secure_url,
+//       name: req.body.name,
+//       role: req.body.role,
      
-    });
+//     });
 
-    const saved = await newTeam.save();
+//     const saved = await newTeam.save();
 
-    res.json(saved);
+//     res.json(saved);
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
-app.delete("/team/:id", authMiddleware, async (req, res) => {
-  try {
-    await Team.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// app.delete("/team/:id", authMiddleware, async (req, res) => {
+//   try {
+//     await Team.findByIdAndDelete(req.params.id);
+//     res.json({ message: "Deleted" });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 // ================= CATEGORY =================
-app.post("/categories", authMiddleware, async (req, res) => {
-  const newCategory = new Category({ name: req.body.name });
-  await newCategory.save();
-  res.json(newCategory);
-});
+app.use("/categories", require("./routes/categories"));
 
-app.get("/categories", async (req, res) => {
-  const categories = await Category.find();
-  res.json(categories);
-});
+// app.post("/categories", authMiddleware, async (req, res) => {
+//   const newCategory = new Category({ name: req.body.name });
+//   await newCategory.save();
+//   res.json(newCategory);
+// });
 
-app.delete("/categories/:id", authMiddleware, async (req, res) => {
-  await Category.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
+// app.get("/categories", async (req, res) => {
+//   const categories = await Category.find();
+//   res.json(categories);
+// });
+
+// app.delete("/categories/:id", authMiddleware, async (req, res) => {
+//   await Category.findByIdAndDelete(req.params.id);
+//   res.json({ message: "Deleted" });
+// });
 
 // ================= SLIDER =================
-app.get("/slider",authMiddleware, async (req, res) => {
-  const data = await Slider.find();
-  res.json(data);
-});
-
-// FIXED SLIDER ROUTE
-
-// ================= SLIDER ROUTE =================
-app.post("/slider", authMiddleware,upload.single("image"), async (req, res) => {
-  try {
-    console.log("FILE:", req.file); // 🔥 debug
-
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    console.log("Uploading to cloudinary...");
-
-   const result = await uploadToCloudinary(req.file.buffer, "slider");
-
-    console.log("CLOUDINARY SUCCESS:", result.secure_url);
-
-    const newSlider = new Slider({
-      image: result.secure_url,
-    });
-
-    const saved = await newSlider.save();
-
-    console.log("DB SAVED:", saved);
-
-    res.json(saved);
-
-  } catch (err) {
-    console.error("FINAL ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete("/slider/:id", authMiddleware, async (req, res) => {
-  await Slider.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
+app.use("/slider", require("./routes/slider"));
 
 // ================= SERVER =================
 app.listen(PORT, () => {

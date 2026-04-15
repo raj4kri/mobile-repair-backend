@@ -6,14 +6,21 @@ const nodemailer = require("nodemailer");
 
 router.post("/", async (req, res) => {
   try {
-    const { name, email, phone, message } = req.body;
+   const { name, email, phone, whatsapp, dob, message } = req.body;
 
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: "All required fields missing ❌" });
-    }
+  if (!name || !email || !message || !whatsapp) {
+  return res.status(400).json({ error: "Required fields missing ❌" });
+}
 
     // 💾 Save in DB
-    const newMsg = new Contact({ name, email, phone, message });
+    const newMsg = new Contact({
+  name,
+  email,
+  phone,
+  whatsapp,
+  dob,
+  message,
+});
     await newMsg.save();
 
     // ✉️ AUTO EMAIL SEND
@@ -113,9 +120,27 @@ router.put("/read/:id", async (req, res) => {
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "rajaryannasa@gmail.com",
-    pass: "psit rwhb pzez mxxq", // ⚠️ use app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
+});
+
+router.get("/birthdays/today", async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(5, 10);
+
+    const users = await Contact.find({
+      dob: { $exists: true, $ne: null },
+    });
+
+    const birthdayUsers = users.filter((u) =>
+      u.dob?.slice(5, 10) === today
+    );
+
+    res.json(birthdayUsers);
+  } catch (err) {
+    res.status(500).json({ error: "Failed ❌" });
+  }
 });
 
 module.exports = router;
