@@ -3,7 +3,7 @@ const router = express.Router();
 const Contact = require("../models/Contact");
 
 const nodemailer = require("nodemailer");
-
+const { uploadToCloudinary } = require("../utils/cloudinary");
 router.post("/", async (req, res) => {
   try {
    const { name, email, phone, whatsapp, dob, message } = req.body;

@@ -6,7 +6,7 @@ const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload"); 
 const { uploadToCloudinary } = require("../utils/cloudinary");
 
-router.post("/slider", authMiddleware,upload.single("image"), async (req, res) => {   
+router.post("/", authMiddleware,upload.single("image"), async (req, res) => {   
    try {
       console.log("FILE:", req.file); // 🔥 debug
   
@@ -37,12 +37,12 @@ router.post("/slider", authMiddleware,upload.single("image"), async (req, res) =
   });
 
 
-  router.get("/slider", async (req, res) => {
+  router.get("/", async (req, res) => {
     const data = await Slider.find();
     res.json(data);
   });
 
-  router.delete("/slider/:id", authMiddleware, async (req, res) => {
+  router.delete("/:id", authMiddleware, async (req, res) => {
     try {
       await Slider.findByIdAndDelete(req.params.id);
       res.json({ message: "Deleted" });
