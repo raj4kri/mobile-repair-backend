@@ -4,22 +4,30 @@ const Product = require("../models/Product");
 
 const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload"); 
-const uploadToCloudinary  = require("../utils/cloudinary");
+const { uploadToCloudinary } = require("../utils/cloudinary");
 
-router.get("/products", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { search = "", category = "", page = 1, limit = 6 } = req.query;
+
     let query = { name: { $regex: search, $options: "i" } };
     if (category) query.category = category;
+
     const skip = (page - 1) * limit;
-    const products = await Product.find(query).skip(skip).limit(parseInt(limit));
+
+    const products = await Product.find(query)
+      .skip(skip)
+      .limit(parseInt(limit));
+
     const total = await Product.countDocuments(query);
+
     res.json({
       products,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
