@@ -12,6 +12,9 @@ const contactRoutes = require("./routes/contact");
 
 require("dotenv").config();
 
+
+
+ // ADD
 // ================= CLOUDINARY =================
 
 const app = express();
@@ -62,7 +65,7 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
+app.use("/team", require("./routes/team"));      // ADD
 // ================= PRODUCTS =================
 app.use("/products", require("./routes/product"));
 
@@ -70,7 +73,7 @@ app.use("/products", require("./routes/product"));
 app.use("/categories", require("./routes/categories"));
 
 // ================= SLIDER =================
-app.use("/slider", require("./routes/slider"));
+app.use("/slider", require("./routes/slider")); 
 
 // ================= SERVER =================
 // const PORT = process.env.PORT || 1000;
