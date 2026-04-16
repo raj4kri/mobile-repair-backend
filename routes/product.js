@@ -25,66 +25,43 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
- try {
-     console.log("BODY:", req.body);
-     console.log("FILE:", req.file);
- 
-     if (!req.file) return res.status(400).json({ error: "Image required" });
- 
-     const result = await uploadToCloudinary(req.file.buffer, "products");
- 
-     const newProduct = new Product({
-       name: req.body.name || "no-name",
-       price: req.body.price || "0",
-       category: req.body.category || "uncategorized",
-       image: result.secure_url,
-     });
- 
-     const saved = await newProduct.save();
- 
-     console.log("SAVED:", saved);
- 
-     res.json(saved);
- 
-   } catch (err) {
-     console.log(err);
-     res.status(500).json({ error: err.message });
-   }});
-
-router.put("/:id", authMiddleware, upload.single("image"), async (req, res) => {
+router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => {
   try {
-      const { name, price, category } = req.body;
-  
-      let imageUrl;
-  
-      if (req.file) {
-        const result = await uploadToCloudinary(req.file.buffer, "products");
-        imageUrl = result.secure_url;
-      }
-  
-      const updatedData = {
-        name,
-        price,
-        category,
-      };
-  
-      // only update image if new uploaded
-      if (imageUrl) {
-        updatedData.image = imageUrl;
-      }
-  
-      const updated = await Product.findByIdAndUpdate(
-        req.params.id,
-        updatedData,
-        { new: true }
-      );
-  
-      res.json(updated);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }});
+    console.log("BODY:", req.body);
+    console.log("FILES:", req.files);
 
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "Images required" });
+    }
+
+    const imageUrls = [];
+
+    for (const file of req.files) {
+      if (!file?.buffer) {
+        throw new Error("File buffer missing");
+      }
+
+      const result = await uploadToCloudinary(file.buffer, "products");
+      imageUrls.push(result.secure_url);
+    }
+
+    const product = await Product.create({
+      name: req.body.name,
+      price: req.body.price,
+      category: req.body.category,
+      images: imageUrls,
+    });
+
+    return res.status(201).json(product);
+
+  } catch (err) {
+    console.log("PRODUCT ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+});
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
