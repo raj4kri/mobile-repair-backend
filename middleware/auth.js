@@ -1,25 +1,30 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const User = require("../models/User");
 
-const SECRET = process.env.JWT_SECRET || "mysecretkey";
-
-const authMiddleware = (req, res, next) => {
+const auth = async (req, res, next) => {
   const header = req.headers.authorization;
 
-  console.log("HEADER:", header); // debug
-
-  if (!header) return res.status(401).json({ message: "No token" });
+  if (!header || !header.startsWith("Bearer")) {
+    return res.status(401).json({ message: "No token" });
+  }
 
   const token = header.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = user;
     next();
-  } catch (err) {
-    console.log("JWT ERROR:", err.message); // 🔥 ADD THIS
-    return res.status(401).json({ message: "Invalid token" });
+
+  } catch (error) {
+    return res.status(401).json({ message: "Token invalid or expired" });
   }
 };
 
-module.exports = authMiddleware;
+module.exports = auth;
