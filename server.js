@@ -5,9 +5,12 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
+const app = express();
+app.use(express.json());
+
 const User = require("./models/User");
 
-const app = express();
+
 
 // ================= MIDDLEWARE =================
 app.use(cors({
@@ -58,11 +61,23 @@ app.post("/login", async (req, res) => {
 });
 
 // ================= ROUTES =================
-app.use("/contact", require("./routes/contact"));
+// app.use("/auth", require("./routes/auth"));
+app.use("/slider", require("./routes/slider"));
 app.use("/products", require("./routes/product"));
 app.use("/categories", require("./routes/categories"));
 app.use("/team", require("./routes/team"));
-app.use("/slider", require("./routes/slider"));
+app.use("/contact", require("./routes/contact"));
+// routes
+app.use("/api/auth", require("./routes/auth"));
+
+// console.log("contact:", require("./routes/contact"));
+// console.log("products:", require("./routes/product"));
+// console.log("categories:", require("./routes/categories"));
+// console.log("team:", require("./routes/team"));
+// console.log("slider:", require("./routes/slider"));
+
+// app.use("/api/auth", authRoutes);
+
 
 // ================= SERVER =================
 app.listen(PORT, () => {
