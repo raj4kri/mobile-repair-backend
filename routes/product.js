@@ -4,7 +4,7 @@ const Product = require("../models/Product");
 
 const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload"); 
-const { uploadToCloudinary } = require("../utils/cloudinary");
+const  uploadToCloudinary  = require("../utils/cloudinary");
 
 router.get("/", async (req, res) => {
   try {
