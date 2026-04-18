@@ -20,42 +20,34 @@ const generateToken = (id) => {
 };
 
 // REGISTER
-
-router.post("/register", asyncHandler(async (req, res) => {
+router.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
   const userExists = await User.findOne({ username });
   if (userExists) {
-    return res.status(400).json({ message: "User already exists" });
+    return res.status(400).json({ message: "User exists" });
   }
 
   const user = await User.create({ username, password });
 
   res.json({
-    token: generateToken(user._id)
+    token: generateToken(user._id),
   });
-}));
+});
 
 // LOGIN
-router.post("/login", (req, res, next) => {
-  Promise.resolve((async () => {
-    const { username, password } = req.body;
+router.post("/login", async (req, res) => {
+  const { username, password } = req.body;
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+  const user = await User.findOne({ username });
 
-    const isMatch = await user.matchPassword(password);
+  if (!user || !(await user.matchPassword(password))) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
 
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    res.json({
-      token: generateToken(user._id)
-    });
-  })()).catch(next);
+  res.json({
+    token: generateToken(user._id),
+  });
 });
 
 router.get("/profile", auth, (req, res) => {
