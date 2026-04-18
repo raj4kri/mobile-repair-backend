@@ -42,7 +42,7 @@ router.post("/", authMiddleware ,upload.single("image"), async (req, res) => {
 // });
 
 
-  router.get("/",authMiddleware, async (req, res) => {
+  router.get("/", async (req, res) => {
     const data = await Slider.find();
     res.json(data);
   });
