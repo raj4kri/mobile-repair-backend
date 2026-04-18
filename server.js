@@ -4,11 +4,13 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
-
+const JWT_SECRET = process.env.JWT_SECRET
 const app = express();
 app.use(express.json());
 
 const User = require("./models/User");
+
+
 
 
 
@@ -24,59 +26,27 @@ app.use(express.urlencoded({ extended: true }));
 // ================= CONFIG =================
 const PORT = process.env.PORT || 1000;
 const MONGO_URI = process.env.MONGO_URI;
-const SECRET = process.env.SECRET || "mysecretkey";
+const SECRET = process.env.JWT_SECRET
+
+require("dotenv").config();
+
+// console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 // ================= DATABASE =================
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
 
-// ================= AUTH =================
-app.post("/register", async (req, res) => {
-  const { username, password } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = new User({ username, password: hashedPassword });
-
-  await user.save();
-  res.json({ message: "User registered" });
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ message: "User not found" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid password" });
-
-    const token = jwt.sign({ id: user._id }, SECRET, { expiresIn: "7d" });
-
-    res.json({ token });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 // ================= ROUTES =================
-// app.use("/auth", require("./routes/auth"));
+app.use("/auth", require("./routes/auth"));
 app.use("/slider", require("./routes/slider"));
 app.use("/products", require("./routes/product"));
 app.use("/categories", require("./routes/categories"));
 app.use("/team", require("./routes/team"));
 app.use("/contact", require("./routes/contact"));
-// routes
-app.use("/api/auth", require("./routes/auth"));
 
-// console.log("contact:", require("./routes/contact"));
-// console.log("products:", require("./routes/product"));
-// console.log("categories:", require("./routes/categories"));
-// console.log("team:", require("./routes/team"));
-// console.log("slider:", require("./routes/slider"));
-
-// app.use("/api/auth", authRoutes);
 
 
 // ================= SERVER =================
