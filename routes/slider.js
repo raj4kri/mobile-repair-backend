@@ -10,7 +10,9 @@ console.log("authMiddleware TYPE:", typeof authMiddleware);
 console.log("upload.single TYPE:", typeof upload.single);
 router.post("/", authMiddleware ,upload.single("image"), async (req, res) => {   
    try {
-      console.log("FILE:", req.file); // 🔥 debug
+    
+       console.log("FILE:", req.file);
+    console.log("BODY:", req.body);
   
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
