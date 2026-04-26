@@ -36,11 +36,11 @@ router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => 
   try {
     console.log("BODY:", req.body);
 
-    const price = Number(req.body.price);
-    const discount = Number(req.body.discount || 0);
+    // const price = Number(req.body.price);
+    // const discount = Number(req.body.discount || 0);
 
-    // 🔥 FINAL PRICE ALWAYS CALCULATED HERE
-    const finalPrice = price - (price * discount) / 100;
+    // // 🔥 FINAL PRICE ALWAYS CALCULATED HERE
+    // const finalPrice = price - (price * discount) / 100;
 
     const imageUrls = [];
 
@@ -48,15 +48,13 @@ router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => 
       const result = await uploadToCloudinary(file.buffer, "products");
       imageUrls.push(result.secure_url);
     }
-
-    const product = new Product({
-      name: req.body.name,
-      price,
-      discount,
-      finalPrice,
-      category: req.body.category,
-      images: imageUrls,
-    });
+const product = new Product({
+  name: req.body.name,
+  price: req.body.price,
+  discount: req.body.discount || 0,
+  category: req.body.category,
+  images: imageUrls,
+});
 
     const saved = await product.save();
 
@@ -89,11 +87,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     product.discount = Number(req.body.discount || 0);
     product.category = req.body.category;
 
-    // 🔥 IMPORTANT FIX
-    product.finalPrice =
-      product.price - (product.price * product.discount) / 100;
-
-    await product.save();
+    await product.save(); // 🔥 hook auto runs here
 
     res.json(product);
   } catch (err) {

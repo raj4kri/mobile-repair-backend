@@ -8,10 +8,19 @@ const productSchema = new mongoose.Schema(
     discount: { type: Number, default: 0 },
     finalPrice: { type: Number, default: 0 },
 
-    category: { type: String, required: true },
+    category: String,
     images: [String],
   },
   { timestamps: true }
 );
+
+productSchema.pre("save", function (next) {
+  const price = Number(this.price);
+  const discount = Number(this.discount || 0);
+
+  this.finalPrice = price - (price * discount) / 100;
+
+  next();
+});
 
 module.exports = mongoose.model("Product", productSchema);
