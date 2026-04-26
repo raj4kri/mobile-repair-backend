@@ -4,11 +4,15 @@ const Slider = require("../models/Slider");
 const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload"); 
-const { uploadToCloudinary } = require("../utils/cloudinary");
+const uploadToCloudinary  = require("../utils/cloudinary");
 
-router.post("/", authMiddleware,upload.single("image"), async (req, res) => {   
+console.log("authMiddleware TYPE:", typeof authMiddleware);
+console.log("upload.single TYPE:", typeof upload.single);
+router.post("/", authMiddleware ,upload.single("image"), async (req, res) => {   
    try {
-      console.log("FILE:", req.file); // 🔥 debug
+    
+       console.log("FILE:", req.file);
+    console.log("BODY:", req.body);
   
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -35,6 +39,9 @@ router.post("/", authMiddleware,upload.single("image"), async (req, res) => {
       res.status(500).json({ error: err.message });
     }
   });
+// router.post("/", (req, res) => {
+//   res.send("WORKING");
+// });
 
 
   router.get("/", async (req, res) => {

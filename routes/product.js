@@ -3,8 +3,8 @@ const router = express.Router();
 const Product = require("../models/Product");
 
 const authMiddleware = require("../middleware/auth");
-const upload = require("../middleware/upload"); 
-const { uploadToCloudinary } = require("../utils/cloudinary");
+const upload = require("../middleware/upload");
+const uploadToCloudinary = require("../utils/cloudinary");
 
 router.get("/", async (req, res) => {
   try {
@@ -27,7 +27,6 @@ router.get("/", async (req, res) => {
       page: parseInt(page),
       pages: Math.ceil(total / limit),
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -36,44 +35,67 @@ router.get("/", async (req, res) => {
 router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => {
   try {
     console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: "Images required" });
-    }
+    const price = Number(req.body.price);
+    const discount = Number(req.body.discount || 0);
+
+    // 🔥 FINAL PRICE ALWAYS CALCULATED HERE
+    const finalPrice = price - (price * discount) / 100;
 
     const imageUrls = [];
 
     for (const file of req.files) {
-      if (!file?.buffer) {
-        throw new Error("File buffer missing");
-      }
-
       const result = await uploadToCloudinary(file.buffer, "products");
       imageUrls.push(result.secure_url);
     }
 
-    const product = await Product.create({
+    const product = new Product({
       name: req.body.name,
-      price: req.body.price,
+      price,
+      discount,
+      finalPrice,
       category: req.body.category,
       images: imageUrls,
     });
 
-    return res.status(201).json(product);
+    const saved = await product.save();
 
+    res.status(201).json(saved);
   } catch (err) {
-    console.log("PRODUCT ERROR:", err);
-
-    return res.status(500).json({
-      error: err.message,
-    });
+    console.log(err);
+    res.status(500).json({ error: err.message });
   }
 });
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE PRODUCT
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    product.name = req.body.name;
+    product.price = Number(req.body.price);
+    product.discount = Number(req.body.discount || 0);
+    product.category = req.body.category;
+
+    // 🔥 IMPORTANT FIX
+    product.finalPrice =
+      product.price - (product.price * product.discount) / 100;
+
+    await product.save();
+
+    res.json(product);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

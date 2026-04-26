@@ -3,7 +3,16 @@ const router = express.Router();
 const Contact = require("../models/Contact");
 
 const nodemailer = require("nodemailer");
-const { uploadToCloudinary } = require("../utils/cloudinary");
+// const { uploadToCloudinary } = require("../utils/cloudinary");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 router.post("/", async (req, res) => {
   try {
    const { name, email, phone, whatsapp, dob, message } = req.body;
@@ -117,13 +126,6 @@ router.put("/read/:id", async (req, res) => {
 
 // const nodemailer = require("nodemailer");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 router.get("/birthdays/today", async (req, res) => {
   try {

@@ -19,4 +19,4 @@ const uploadToCloudinary = (buffer, folder) => {
     stream.end(buffer);
   });
 };
-exports.uploadToCloudinary = uploadToCloudinary;
+module.exports = uploadToCloudinary;
