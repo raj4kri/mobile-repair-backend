@@ -14,13 +14,10 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.pre("save", function (next) {
+productSchema.pre("save", async function () {
   const price = Number(this.price);
   const discount = Number(this.discount || 0);
 
   this.finalPrice = price - (price * discount) / 100;
-
-  next(); // 🔥 MUST
-
 });
 module.exports = mongoose.model("Product", productSchema);
