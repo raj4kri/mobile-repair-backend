@@ -20,7 +20,7 @@ productSchema.pre("save", function (next) {
 
   this.finalPrice = price - (price * discount) / 100;
 
-  next();
-});
+  next(); // 🔥 MUST
 
+});
 module.exports = mongoose.model("Product", productSchema);
