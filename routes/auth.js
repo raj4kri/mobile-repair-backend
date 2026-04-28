@@ -57,4 +57,11 @@ router.get("/profile", auth, (req, res) => {
   });
 });
 
+router.get("/verify", auth, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
+});
+
 module.exports = router;
