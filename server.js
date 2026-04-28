@@ -10,6 +10,10 @@ app.use(cors());
 app.use(express.json());
 
 // routes
+
+const userRoutes = require("./routes/userRoutes");
+
+app.use("/users", userRoutes);
 app.use("/auth", require("./routes/auth"));
 app.use("/slider", require("./routes/slider"));
 app.use("/products", require("./routes/product"));

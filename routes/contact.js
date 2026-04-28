@@ -33,34 +33,80 @@ router.post("/", async (req, res) => {
     await newMsg.save();
 
     // ✉️ AUTO EMAIL SEND
-    await transporter.sendMail({
-  from: "yourgmail@gmail.com",
-  to: email,
+await transporter.sendMail({
+  from: `"Deepak Communication" <${process.env.EMAIL_USER}>`,
+  to: email, // ✅ only user gets email
   subject: "Thank you for contacting Deepak Communication",
-  html: `
-    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-      <h2 style="color: #2c3e50;">Thank You, ${name}! 🙏</h2>
-      
-      <p>We have successfully received your message.</p>
-      
-      <p><strong>Your Message:</strong></p>
-      <blockquote style="background:#f4f4f4; padding:10px; border-left:4px solid #3498db;">
-        ${message}
-      </blockquote>
+ html: `
+<div style="margin:0;padding:0;background:#0f172a;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        
+        <!-- MAIN CARD -->
+        <table width="600" style="max-width:600px;background:#020617;border-radius:12px;overflow:hidden;border:1px solid #1e293b;">
+          
+          <!-- HEADER -->
+          <tr>
+            <td style="padding:20px;text-align:center;background:linear-gradient(90deg,#3b82f6,#06b6d4);">
+              <h1 style="margin:0;color:#fff;font-size:22px;">
+                Deepak Communication
+              </h1>
+              <p style="margin:5px 0 0;color:#e0f2fe;font-size:13px;">
+                Mobile Repair & Accessories
+              </p>
+            </td>
+          </tr>
 
-      <p>Our team will review your request and get back to you as soon as possible.</p>
+          <!-- BODY -->
+          <tr>
+            <td style="padding:25px;color:#e2e8f0;">
+              
+              <h2 style="color:#38bdf8;margin-bottom:10px;">
+                Hello ${name} 👋
+              </h2>
 
-      <hr />
+              <p style="font-size:14px;line-height:1.6;">
+                Thank you for contacting us. We’ve received your message and our team will get back to you shortly.
+              </p>
 
-      <p><strong>Deepak Communication</strong><br/>
-      Mobile Repair & Accessories<br/>
-      📞 Contact: +91-XXXXXXXXXX</p>
+              <!-- MESSAGE BOX -->
+              <div style="background:#0f172a;border-left:4px solid #38bdf8;padding:15px;margin:20px 0;border-radius:8px;">
+                <p style="margin:0;font-size:13px;color:#cbd5f5;">
+                  ${message}
+                </p>
+              </div>
 
-      <p style="color: gray; font-size: 12px;">
-        This is an automated response. Please do not reply directly to this email.
-      </p>
-    </div>
-  `
+              <!-- CTA BUTTON -->
+              <div style="text-align:center;margin:25px 0;">
+                <a href="https://wa.me/919060211167" 
+                   style="background:#22c55e;color:#fff;padding:12px 20px;text-decoration:none;border-radius:8px;font-size:14px;display:inline-block;">
+                  Chat on WhatsApp
+                </a>
+              </div>
+
+              <p style="font-size:13px;color:#94a3b8;">
+                📍 Rukanpura, Patna <br/>
+                📞 +91 9060211167
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:15px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid #1e293b;">
+              © ${new Date().getFullYear()} Deepak Communication. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</div>
+`
 });
 
     res.json({ message: "Message sent + email delivered ✅" });

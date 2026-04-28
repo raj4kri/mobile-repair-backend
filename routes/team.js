@@ -1,45 +1,58 @@
 const express = require("express");
 const authMiddleware = require("../middleware/auth");
+const checkPermission = require("../middleware/checkPermission");
 const upload = require("../middleware/upload"); 
-const  uploadToCloudinary  = require("../utils/cloudinary");
+const uploadToCloudinary = require("../utils/cloudinary");
 const Team = require("../models/Team");
+
 const router = express.Router();
 
-console.log("auth:", authMiddleware);
-console.log("upload:", upload);
+// CREATE TEAM (ADMIN ONLY)
+router.post(
+  "/",
+  authMiddleware,
+  checkPermission("manage_team"),
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
 
-router.post("/",authMiddleware,upload.single("image"), async (req, res) => {
-  try {
-    console.log("FILE:", req.file); // 🔥 debug
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const result = await uploadToCloudinary(req.file.buffer, "team");
 
-  const result = await uploadToCloudinary(req.file.buffer, "team");
+      const newTeam = new Team({
+        image: result.secure_url,
+        name: req.body.name,
+        role: req.body.role,
+      });
 
-    const newTeam = new Team({
-       image: result.secure_url,
-      name: req.body.name,
-      role: req.body.role,
-     
-    });
+      const saved = await newTeam.save();
+      res.json(saved);
 
-    const saved = await newTeam.save();
-
-    res.json(saved);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
-router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    await Team.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+// DELETE TEAM (ADMIN ONLY)
+router.delete(
+  "/:id",
+  authMiddleware,
+  checkPermission(["admin"]),
+  async (req, res) => {
+    try {
+      await Team.findByIdAndDelete(req.params.id);
+      res.json({ message: "Deleted" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
+
+// GET TEAM (PUBLIC)
 router.get("/", async (req, res) => {
   const data = await Team.find();
   res.json(data);
