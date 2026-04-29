@@ -1,14 +1,5 @@
 module.exports = {
-  admin: [
-    "manage_products",
-    "manage_categories",
-    "manage_team",
-    "manage_slider",
-    "manage_users"
-  ],
-  manager: [
-    "manage_products",
-    "manage_categories"
-  ],
-  user: []
+  superadmin: ["manage_users", "manage_products", "manage_categories"],
+  admin: ["manage_products", "manage_categories"],
+  manager: ["manage_products"],
 };

@@ -7,16 +7,15 @@ const router = express.Router();
 
 
 
-const generateToken = (id) => {
-  console.log("SIGN SECRET:", process.env.JWT_SECRET);
+const generateToken = (user) => {
   return jwt.sign(
-    { id },
+    {
+      id: user._id,
+      role: user.role, // ✅ REQUIRED
+    },
     process.env.JWT_SECRET,
-    
     { expiresIn: "7d" }
-    
   );
-  
 };
 
 // REGISTER
@@ -31,7 +30,7 @@ router.post("/register", async (req, res) => {
   const user = await User.create({ username, password });
 
   res.json({
-    token: generateToken(user._id),
+      token: generateToken(user),
   });
 });
 
@@ -46,7 +45,7 @@ router.post("/login", async (req, res) => {
   }
 
   res.json({
-    token: generateToken(user._id),
+    token: generateToken(user),
   });
 });
 
