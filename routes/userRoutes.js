@@ -11,8 +11,16 @@ router.get(
   authMiddleware,
   checkPermission("manage_users"),
   async (req, res) => {
-    const users = await User.find().select("-password");
-    res.json(users);
+    try {
+      console.log("GET USERS HIT"); // ✅ debug
+
+      const users = await User.find().select("-password");
+
+      res.json(users);
+    } catch (err) {
+      console.error("GET USERS ERROR:", err); // 🔥 THIS WILL SHOW REAL ISSUE
+      res.status(500).json({ message: err.message });
+    }
   }
 );
 
