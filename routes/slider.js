@@ -8,10 +8,11 @@ const uploadToCloudinary = require("../utils/cloudinary");
 const router = express.Router();
 
 // CREATE SLIDER (ADMIN ONLY)
+// CREATE SLIDER
 router.post(
   "/",
   authMiddleware,
-checkPermission("manage_slider"),
+  checkPermission("manage_slider"),
   upload.single("image"),
   async (req, res) => {
     try {
@@ -29,7 +30,21 @@ checkPermission("manage_slider"),
       res.json(saved);
 
     } catch (err) {
-      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// DELETE SLIDER
+router.delete(
+  "/:id",
+  authMiddleware,
+  checkPermission("manage_slider"), // ✅ FIXED
+  async (req, res) => {
+    try {
+      await Slider.findByIdAndDelete(req.params.id);
+      res.json({ message: "Deleted" });
+    } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }
@@ -41,19 +56,7 @@ router.get("/", async (req, res) => {
   res.json(data);
 });
 
-// DELETE SLIDER (ADMIN ONLY)
-router.delete(
-  "/:id",
-  authMiddleware,
-  checkPermission(["admin"]),
-  async (req, res) => {
-    try {
-      await Slider.findByIdAndDelete(req.params.id);
-      res.json({ message: "Deleted" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
+
+
 
 module.exports = router;
