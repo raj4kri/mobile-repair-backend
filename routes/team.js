@@ -8,6 +8,7 @@ const Team = require("../models/Team");
 const router = express.Router();
 
 // CREATE TEAM (ADMIN ONLY)
+// CREATE TEAM
 router.post(
   "/",
   authMiddleware,
@@ -31,17 +32,16 @@ router.post(
       res.json(saved);
 
     } catch (err) {
-      console.error(err);
       res.status(500).json({ error: err.message });
     }
   }
 );
 
-// DELETE TEAM (ADMIN ONLY)
+// DELETE TEAM
 router.delete(
   "/:id",
   authMiddleware,
-  checkPermission(["admin"]),
+  checkPermission("manage_team"), // ✅ FIXED
   async (req, res) => {
     try {
       await Team.findByIdAndDelete(req.params.id);
