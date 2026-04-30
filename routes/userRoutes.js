@@ -33,22 +33,19 @@ router.post(
     try {
       const { username, password, role } = req.body;
 
-      if (!username || !password || !role) {
-        return res.status(400).json({ message: "All fields required" });
-      }
-
-      if (password.length < 6) {
-        return res.status(400).json({ message: "Password must be 6+ chars" });
-      }
+      console.log("CREATE USER BODY:", req.body); // 🔥 ADD
 
       const user = new User({ username, password, role });
       await user.save();
 
       res.json({ message: "User created" });
-
     } catch (err) {
-      console.error("CREATE USER ERROR:", err.message); // 🔥 IMPORTANT
-      res.status(500).json({ error: err.message });
+      console.error("🔥 CREATE USER ERROR:", err); // ✅ THIS IS KEY
+
+      res.status(500).json({
+        error: err.message,
+        full: err, // optional (for debugging)
+      });
     }
   }
 );
