@@ -29,7 +29,11 @@ router.post(
       });
 
       const saved = await newTeam.save();
-      res.json(saved);
+
+      res.status(201).json({
+        message: "Team member added successfully ✅",
+        data: saved
+      });
 
     } catch (err) {
       res.status(500).json({ error: err.message });
