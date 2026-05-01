@@ -13,7 +13,7 @@ app.use(express.json());
 // routes
 const visitorRoutes = require("./routes/visitorRoutes");
 
-app.use("/", visitorRoutes); // IMPORTANT
+app.use("/", visitorRoutes);
 const userRoutes = require("./routes/userRoutes");
 
 app.use("/users", userRoutes);

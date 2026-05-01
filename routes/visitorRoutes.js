@@ -1,29 +1,43 @@
 const express = require("express");
 const router = express.Router();
-const Visitor = require("../models/Visitor");
+const Visitor = require("../models/Visitors");
+
+// helper: get IST date safely
+const getToday = () => {
+  const now = new Date();
+  const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  ist.setHours(0, 0, 0, 0);
+  return ist;
+};
 
 // increment visit
 router.get("/visit", async (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const today = getToday();
 
-  let data = await Visitor.findOne({ date: today });
+    const data = await Visitor.findOneAndUpdate(
+      { date: today },
+      { $inc: { count: 1 } },
+      { new: true, upsert: true }
+    );
 
-  if (!data) {
-    data = await Visitor.create({ date: today, count: 1 });
-  } else {
-    data.count += 1;
-    await data.save();
+    res.json({ count: data.count });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
   }
-
-  res.json({ count: data.count });
 });
 
 // get today count
 router.get("/today", async (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
-  const data = await Visitor.findOne({ date: today });
+  try {
+    const today = getToday();
 
-  res.json({ count: data?.count || 0 });
+    const data = await Visitor.findOne({ date: today });
+
+    res.json({ count: data?.count || 0 });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 module.exports = router;
