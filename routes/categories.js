@@ -5,7 +5,7 @@ const upload = require("../middleware/upload");
 // const { uploadToCloudinary } = require("../utils/cloudinary");
 const router = express.Router();
 
-checkPermission = require("../middleware/checkPermission");
+const checkPermission = require("../middleware/checkPermission");
 
 /**
  * POST /categories
@@ -66,7 +66,7 @@ router.get("/", async (req, res) => {
 /**
  * DELETE /categories/:id
  */
-router.delete("/:id", authMiddleware, checkPermission(["admin", "manager"]), async (req, res) => {
+router.delete("/:id", authMiddleware, checkPermission("manage_categories"), async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: "Deleted" });
