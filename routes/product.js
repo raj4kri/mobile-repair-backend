@@ -48,35 +48,56 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE PRODUCT (only admin + superadmin)
+// CREATE PRODUCT
 router.post(
   "/",
   authMiddleware,
-  checkPermission("manage_products"), // ✅ ADD THIS
-  upload.array("images", 5),
+  checkPermission("manage_products"),
+  upload.array("images", 5), // ✅ allow 5 images
   async (req, res) => {
     try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+          error: "No images uploaded",
+        });
+      }
+
       const imageUrls = [];
 
+      // ✅ upload all images
       for (const file of req.files) {
-        const result = await uploadToCloudinary(file.buffer, "products");
+        const result = await uploadToCloudinary(
+          file.buffer,
+          "products"
+        );
+
         imageUrls.push(result.secure_url);
       }
 
+      // ✅ create product
       const product = new Product({
         name: req.body.name,
-        price: req.body.price,
-        discount: req.body.discount || 0,
+        price: Number(req.body.price),
+        discount: Number(req.body.discount || 0),
         category: req.body.category,
         images: imageUrls,
       });
 
       const saved = await product.save();
 
-      res.status(201).json(saved);
+      res.status(201).json({
+        success: true,
+        message: "Product created successfully 🎉",
+        product: saved,
+      });
+
     } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: err.message });
+      console.log("PRODUCT ERROR:", err);
+
+      res.status(500).json({
+        success: false,
+        error: err.message || "Upload failed",
+      });
     }
   }
 );

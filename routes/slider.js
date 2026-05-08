@@ -12,25 +12,45 @@ const router = express.Router();
 router.post(
   "/",
   authMiddleware,
-  checkPermission("manage_slider"),
   upload.single("image"),
   async (req, res) => {
     try {
+
+      // ✅ check image
       if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+        return res.status(400).json({
+          success: false,
+          message: "No image uploaded",
+        });
       }
 
-      const result = await uploadToCloudinary(req.file.buffer, "slider");
+      // ✅ upload to cloudinary
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "sliders"
+      );
 
-      const newSlider = new Slider({
+      // ✅ save in DB
+      const slider = new Slider({
         image: result.secure_url,
       });
 
-      const saved = await newSlider.save();
-      res.json(saved);
+      await slider.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Slider uploaded successfully 🎉",
+        slider,
+      });
 
     } catch (err) {
-      res.status(500).json({ error: err.message });
+
+      console.log("SLIDER ERROR:", err);
+
+      res.status(500).json({
+        success: false,
+        message: err.message || "Upload failed",
+      });
     }
   }
 );

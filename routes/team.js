@@ -16,27 +16,54 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
+
+      // ✅ validate image
       if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+        return res.status(400).json({
+          success: false,
+          error: "No image uploaded",
+        });
       }
 
-      const result = await uploadToCloudinary(req.file.buffer, "team");
+      // ✅ validate fields
+      const { name, role } = req.body;
 
+      if (!name || !role) {
+        return res.status(400).json({
+          success: false,
+          error: "Name and role are required",
+        });
+      }
+
+      // ✅ upload image
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "team"
+      );
+
+      // ✅ save team member
       const newTeam = new Team({
         image: result.secure_url,
-        name: req.body.name,
-        role: req.body.role,
+        name,
+        role,
       });
 
       const saved = await newTeam.save();
 
       res.status(201).json({
-        message: "Team member added successfully ✅",
-        data: saved
+        success: true,
+        message: "Team member added successfully 🎉",
+        data: saved,
       });
 
     } catch (err) {
-      res.status(500).json({ error: err.message });
+
+      console.log("TEAM ERROR:", err);
+
+      res.status(500).json({
+        success: false,
+        error: err.message || "Upload failed",
+      });
     }
   }
 );
