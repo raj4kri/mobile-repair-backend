@@ -48,14 +48,17 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE PRODUCT
 router.post(
   "/",
   authMiddleware,
   checkPermission("manage_products"),
-  upload.array("images", 5), // ✅ allow 5 images
+  upload.array("images", 5),
   async (req, res) => {
     try {
+
+      console.log("BODY:", req.body);
+      console.log("FILES:", req.files);
+
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           error: "No images uploaded",
@@ -64,17 +67,19 @@ router.post(
 
       const imageUrls = [];
 
-      // ✅ upload all images
       for (const file of req.files) {
-        const result = await uploadToCloudinary(
-          file.buffer,
-          "products"
-        );
 
-        imageUrls.push(result.secure_url);
+        if (!file.buffer) {
+          return res.status(400).json({
+            error: "Invalid image file",
+          });
+        }
+
+      const imageUrl = await uploadToCloudinary(file.buffer);
+
+imageUrls.push(imageUrl);
       }
 
-      // ✅ create product
       const product = new Product({
         name: req.body.name,
         price: Number(req.body.price),
@@ -85,18 +90,14 @@ router.post(
 
       const saved = await product.save();
 
-      res.status(201).json({
-        success: true,
-        message: "Product created successfully 🎉",
-        product: saved,
-      });
+      res.status(201).json(saved);
 
     } catch (err) {
+
       console.log("PRODUCT ERROR:", err);
 
       res.status(500).json({
-        success: false,
-        error: err.message || "Upload failed",
+        error: err.message || "Product upload failed",
       });
     }
   }

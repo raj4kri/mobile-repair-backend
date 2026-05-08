@@ -17,7 +17,6 @@ router.post(
   async (req, res) => {
     try {
 
-      // ✅ validate image
       if (!req.file) {
         return res.status(400).json({
           success: false,
@@ -25,7 +24,6 @@ router.post(
         });
       }
 
-      // ✅ validate fields
       const { name, role } = req.body;
 
       if (!name || !role) {
@@ -36,14 +34,14 @@ router.post(
       }
 
       // ✅ upload image
-      const result = await uploadToCloudinary(
+      const imageUrl = await uploadToCloudinary(
         req.file.buffer,
         "team"
       );
 
-      // ✅ save team member
+      // ✅ save
       const newTeam = new Team({
-        image: result.secure_url,
+        image: imageUrl,
         name,
         role,
       });
