@@ -7,7 +7,6 @@ const uploadToCloudinary = require("../utils/cloudinary");
 
 const router = express.Router();
 
-// CREATE SLIDER (ADMIN ONLY)
 // CREATE SLIDER
 router.post(
   "/",
@@ -16,7 +15,6 @@ router.post(
   async (req, res) => {
     try {
 
-      // ✅ check image
       if (!req.file) {
         return res.status(400).json({
           success: false,
@@ -24,15 +22,15 @@ router.post(
         });
       }
 
-      // ✅ upload to cloudinary
-      const result = await uploadToCloudinary(
+      // ✅ upload image
+      const imageUrl = await uploadToCloudinary(
         req.file.buffer,
         "sliders"
       );
 
-      // ✅ save in DB
+      // ✅ save slider
       const slider = new Slider({
-        image: result.secure_url,
+        image: imageUrl,
       });
 
       await slider.save();
@@ -59,24 +57,37 @@ router.post(
 router.delete(
   "/:id",
   authMiddleware,
-  checkPermission("manage_slider"), // ✅ FIXED
+  checkPermission("manage_slider"),
   async (req, res) => {
     try {
       await Slider.findByIdAndDelete(req.params.id);
-      res.json({ message: "Deleted" });
+
+      res.json({
+        success: true,
+        message: "Deleted successfully",
+      });
+
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({
+        success: false,
+        error: err.message,
+      });
     }
   }
 );
 
-// GET SLIDER (PUBLIC)
+// GET SLIDER
 router.get("/", async (req, res) => {
-  const data = await Slider.find();
-  res.json(data);
+  try {
+    const data = await Slider.find();
+    res.json(data);
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
 });
-
-
-
 
 module.exports = router;
